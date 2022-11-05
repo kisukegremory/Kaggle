@@ -1290,6 +1290,26 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "xgboost"
+version = "1.7.1"
+description = "XGBoost Python Package"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+dask = ["dask", "pandas", "distributed"]
+datatable = ["datatable"]
+pandas = ["pandas"]
+plotting = ["graphviz", "matplotlib"]
+pyspark = ["pyspark", "scikit-learn", "cloudpickle"]
+scikit-learn = ["scikit-learn"]
+
+[[package]]
 name = "zipp"
 version = "3.9.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1304,7 +1324,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "1ac3fe1cd38f28547453aa1570aafebb0c4a963c46d2cb926702b974ecfc3852"
+content-hash = "57282afab174dfe5fee995a4efc595eba7c04849a39fefeba699e28a9c9a03b7"
 
 [metadata.files]
 anyio = []
@@ -1610,4 +1630,5 @@ webencodings = [
 ]
 websocket-client = []
 widgetsnbextension = []
+xgboost = []
 zipp = []
