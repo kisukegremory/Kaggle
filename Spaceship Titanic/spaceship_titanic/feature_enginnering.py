@@ -26,20 +26,27 @@ def dtype_memory_reducer(df: pd.DataFrame) -> pd.DataFrame:
     df['Destination'] = df['Destination'].astype('category')
     return df
 
-def outliers_to_log(df:pd.DataFrame) -> pd.DataFrame:
-    to_log = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
-    for col in to_log:
-        df[col] = np.log(df[col] + 1)
+def outliers_to_log(
+    df:pd.DataFrame, 
+    cols: list = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
+    ) -> pd.DataFrame:
+    for col in cols:
+        mask = df[col] > 0
+        df.loc[mask,col] = np.log(df.loc[mask,col])
     return df
 
 def cabin_inputer(df:pd.DataFrame) -> pd.DataFrame:
-    cabin_features = df['Cabin'].str.split("/",expand=True)[[0,2]].rename(columns={0:'Deck',2:'side'})
+    cabin_features = df['Cabin'].str.split("/",expand=True).rename(columns={0:'Deck',1:'Num',2:'Side'})
     df = pd.concat([df,cabin_features],axis=1)
+    df['Side'] = df['Side'].fillna("U")
     df['Deck'] = df['Deck'].fillna('G').replace("T","G")
-    df = df.drop(['side','Cabin'],axis=1)
+    df['Num'] = df['Num'].fillna(df['Num'].median()).astype(int)
+    df = df.drop(['Cabin'],axis=1)
     return df
 
 def vip_knn_input(df: pd.DataFrame) -> pd.DataFrame:
+    mask = (df['HomePlanet'] == 'Earth') & df['VIP'].isna()
+    df.loc[mask,'VIP'] = False 
     inputer = KNNImputer(n_neighbors=5)
     df['VIP'] = inputer.fit_transform(df[['VIP','RoomService']])[:,0]
     return df
@@ -50,6 +57,20 @@ def apply_interactions(df:pd.DataFrame, target_col: str):
     df = df.drop(df.columns[df.nunique() == 1].tolist(),axis=1)
     return df
 
+def calculate_group_lastname_size(df_index: pd.core.indexes.base.Index, df: pd.DataFrame):
+    '''
+    usage example:
+    df['GroupLastNameSize'] = calculate_group_lastname_size(
+        df_train.index,
+        pd.concat([df_train,df_test])
+    )
+    '''
+    df[['first_name','last_name']] = df['Name'].str.split(" ",expand=True)
+    df['group_id'] = df.index.to_frame()['PassengerId'].str.split("_",expand=True).astype(int)[0].to_frame('GroupID')
+    df['GroupSize'] = df.groupby(['group_id'])['group_id'].transform('count')
+    df['GroupLastNameSize'] = df.groupby(['group_id','last_name'])['group_id'].transform('count')
+    df['GroupLastNameSize'] = df['GroupLastNameSize'].fillna(1).astype(int)
+    return df['GroupLastNameSize'].loc[df_index]
 
 def calculate_groupsize(df_index: pd.core.indexes.base.Index, full_index: pd.core.indexes.base.Index):
     full_index = full_index.to_frame()['PassengerId'].str.split("_",expand=True).astype(int)[0].to_frame('GroupID')
